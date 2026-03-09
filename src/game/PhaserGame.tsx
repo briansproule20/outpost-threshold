@@ -1,32 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from "./config";
 
 export default function PhaserGame() {
-  const gameRef = useRef<unknown>(null);
+  const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
+    let destroyed = false;
 
     async function initPhaser() {
       const Phaser = await import("phaser");
-      const { GridScene } = await import("./scenes/GridScene");
+      const { MainScene } = await import("./scenes/MainScene");
 
-      if (gameRef.current || !containerRef.current) return;
+      if (destroyed || gameRef.current || !containerRef.current) return;
 
       gameRef.current = new Phaser.Game({
         type: Phaser.AUTO,
-        width: 800,
-        height: 600,
+        width: CANVAS_WIDTH,
+        height: CANVAS_HEIGHT,
         parent: containerRef.current,
-        backgroundColor: "#0f0f23",
-        scene: [GridScene],
+        backgroundColor: "#0a0a1a",
+        scene: [MainScene],
         scale: {
           mode: Phaser.Scale.FIT,
           autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -37,15 +33,22 @@ export default function PhaserGame() {
     initPhaser();
 
     return () => {
-      const game = gameRef.current as Phaser.Game | null;
-      if (game) {
-        game.destroy(true);
+      destroyed = true;
+      if (gameRef.current) {
+        gameRef.current.destroy(true);
         gameRef.current = null;
       }
     };
-  }, [mounted]);
+  }, []);
 
-  if (!mounted) return null;
-
-  return <div ref={containerRef} className="w-full max-w-[800px] aspect-[4/3]" />;
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        width: "100%",
+        maxWidth: CANVAS_WIDTH,
+        aspectRatio: `${CANVAS_WIDTH} / ${CANVAS_HEIGHT}`,
+      }}
+    />
+  );
 }
