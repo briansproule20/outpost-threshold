@@ -22,7 +22,7 @@ export default function Home() {
           Phase 1 &mdash; Canvas Integration
         </p>
       </div>
-      <div className="flex-1 w-full flex items-center justify-center">
+      <div className="flex-1 w-full flex items-center justify-center min-h-0 overflow-hidden">
         <PhaserGame />
       </div>
     </div>

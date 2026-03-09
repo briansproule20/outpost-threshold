@@ -9,6 +9,9 @@ import {
 } from "../config";
 
 export class MainScene extends Phaser.Scene {
+  // Track canyon wall game objects by "col,row" key for deletion
+  private canyonObjects = new Map<string, Phaser.GameObjects.GameObject[]>();
+
   constructor() {
     super({ key: "MainScene" });
   }
@@ -20,6 +23,7 @@ export class MainScene extends Phaser.Scene {
     this.drawSpawnPoints();
     this.drawGridOverlay();
     this.drawHUD();
+    this.setupClickToDelete();
   }
 
   private drawTerrain() {
@@ -52,50 +56,50 @@ export class MainScene extends Phaser.Scene {
       canyonTiles.push([0, row]);
     }
 
-    // Fortification walls around Hub
-    for (let col = 1; col <= 4; col++) {
-      canyonTiles.push([col, 11]);
-      canyonTiles.push([col, 16]);
-    }
-    canyonTiles.push([1, 12], [1, 15], [5, 11], [5, 16]);
-    // Scattered rocks
-    canyonTiles.push([8, 5], [8, 6], [12, 22], [12, 23], [20, 2], [25, 27]);
 
     for (const [col, row] of canyonTiles) {
       const x = col * TILE_SIZE + TILE_SIZE / 2;
       const y = row * TILE_SIZE + TILE_SIZE / 2;
-      this.add.rectangle(x, y, TILE_SIZE, TILE_SIZE, COLORS.canyon);
-      this.add.rectangle(x - 1, y - 1, TILE_SIZE - 6, TILE_SIZE - 6, COLORS.canyonHighlight);
+      const base = this.add.rectangle(x, y, TILE_SIZE, TILE_SIZE, COLORS.canyon);
+      const highlight = this.add.rectangle(x - 1, y - 1, TILE_SIZE - 6, TILE_SIZE - 6, COLORS.canyonHighlight);
+      this.canyonObjects.set(`${col},${row}`, [base, highlight]);
     }
   }
 
   private drawCommandHub() {
-    const hubCenterX = 2 * TILE_SIZE + TILE_SIZE / 2;
-    const hubCenterY = 14 * TILE_SIZE + TILE_SIZE / 2;
-    const hubW = 3 * TILE_SIZE;
-    const hubH = 3 * TILE_SIZE;
+    // 6x6 tile hub, vertically centered, against left wall
+    const hubSize = 6;
+    const hubStartCol = 1;
+    const hubEndCol = hubStartCol + hubSize - 1;
+    const hubStartRow = Math.floor(GRID_HEIGHT / 2) - Math.floor(hubSize / 2);
+    const hubEndRow = hubStartRow + hubSize - 1;
+
+    const hubCenterX = ((hubStartCol + hubEndCol) / 2) * TILE_SIZE + TILE_SIZE / 2;
+    const hubCenterY = ((hubStartRow + hubEndRow) / 2) * TILE_SIZE + TILE_SIZE / 2;
+    const hubW = hubSize * TILE_SIZE;
+    const hubH = hubSize * TILE_SIZE;
 
     // Glow
     this.add.rectangle(hubCenterX, hubCenterY, hubW + 6, hubH + 6, COLORS.commandHubBorder, 0.4);
 
     // Tiles
-    for (let row = 13; row <= 15; row++) {
-      for (let col = 1; col <= 3; col++) {
+    for (let row = hubStartRow; row <= hubEndRow; row++) {
+      for (let col = hubStartCol; col <= hubEndCol; col++) {
         const x = col * TILE_SIZE + TILE_SIZE / 2;
         const y = row * TILE_SIZE + TILE_SIZE / 2;
         this.add.rectangle(x, y, TILE_SIZE - 1, TILE_SIZE - 1, COLORS.commandHub);
-        this.add.rectangle(x, y, TILE_SIZE - 6, TILE_SIZE - 6, COLORS.commandHubCore, 0.3);
+        this.add.rectangle(x, y, TILE_SIZE - 4, TILE_SIZE - 4, COLORS.commandHubCore, 0.3);
       }
     }
 
-    this.add.text(hubCenterX, hubCenterY - 10, "COMMAND", {
+    this.add.text(hubCenterX, hubCenterY - 6, "COMMAND", {
       fontSize: "11px",
       color: "#0a0a1a",
       fontStyle: "bold",
       fontFamily: "monospace",
     }).setOrigin(0.5);
-    this.add.text(hubCenterX, hubCenterY + 6, "HUB", {
-      fontSize: "16px",
+    this.add.text(hubCenterX, hubCenterY + 8, "HUB", {
+      fontSize: "14px",
       color: "#0a0a1a",
       fontStyle: "bold",
       fontFamily: "monospace",
@@ -104,9 +108,9 @@ export class MainScene extends Phaser.Scene {
 
   private drawSpawnPoints() {
     const spawns = [
-      { row: 3, label: "SPAWN 1" },
-      { row: 14, label: "SPAWN 2" },
-      { row: 25, label: "SPAWN 3" },
+      { row: 6, label: "SPAWN 1" },
+      { row: Math.floor(GRID_HEIGHT / 2), label: "SPAWN 2" },
+      { row: GRID_HEIGHT - 7, label: "SPAWN 3" },
     ];
 
     for (const spawn of spawns) {
@@ -183,5 +187,21 @@ export class MainScene extends Phaser.Scene {
       color: "#4a4a6a",
       fontFamily: "monospace",
     }).setOrigin(1, 0).setDepth(100);
+  }
+
+  private setupClickToDelete() {
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (!pointer.leftButtonDown()) return;
+
+      const col = Math.floor(pointer.x / TILE_SIZE);
+      const row = Math.floor(pointer.y / TILE_SIZE);
+      const key = `${col},${row}`;
+
+      const objects = this.canyonObjects.get(key);
+      if (objects) {
+        for (const obj of objects) obj.destroy();
+        this.canyonObjects.delete(key);
+      }
+    });
   }
 }

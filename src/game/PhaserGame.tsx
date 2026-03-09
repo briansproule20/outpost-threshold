@@ -46,8 +46,9 @@ export default function PhaserGame() {
       ref={containerRef}
       style={{
         width: "100%",
+        height: "100%",
         maxWidth: CANVAS_WIDTH,
-        aspectRatio: `${CANVAS_WIDTH} / ${CANVAS_HEIGHT}`,
+        maxHeight: CANVAS_HEIGHT,
       }}
     />
   );
