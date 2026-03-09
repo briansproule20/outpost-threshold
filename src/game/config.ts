@@ -4,6 +4,18 @@ export const TILE_SIZE = 16;
 export const CANVAS_WIDTH = GRID_WIDTH * TILE_SIZE; // 1280
 export const CANVAS_HEIGHT = GRID_HEIGHT * TILE_SIZE; // 960
 
+// Tile indices in the tileset (each tile is a row in the generated spritesheet)
+export enum TileType {
+  GROUND_A = 0,
+  GROUND_B = 1,
+  WALL = 2,
+  HUB = 3,
+  HUB_CORE = 4,
+  SPAWN = 5,
+  PATH = 6,
+  BUILDABLE = 7,
+}
+
 export const COLORS = {
   // Terrain
   ground: 0x2a2a2a,
@@ -20,10 +32,15 @@ export const COLORS = {
   spawnPoint: 0xe74c3c,
   spawnGlow: 0xff6b5a,
 
+  // Path
+  path: 0x3a3a2a,
+
+  // Buildable
+  buildable: 0x2a3a2a,
+
   // Grid overlay
   gridLine: 0x3a3a3a,
 
   // UI
   background: 0x0a0a1a,
-  buildZone: 0x2a2a2a,
 };
